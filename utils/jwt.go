@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"context"
+	"errors"
 	"github.com/golang-jwt/jwt/v4"
 	"time"
 )
@@ -26,4 +28,20 @@ func GenerateJwtToken(a Auth, p *Payload) (string, error) {
 	token.Claims = claims
 	// 使用 secretKey 签名JWT，并返回生成的字符串和错误（如果有）
 	return token.SignedString([]byte(a.AccessSecret))
+}
+
+// GetPayloadFromContext 从context中获取用户payload信息
+// 返回payload和错误信息
+func GetPayloadFromContext(ctx context.Context) (*Payload, error) {
+	unverifiedPayload := ctx.Value("payload")
+	if unverifiedPayload == nil {
+		return nil, errors.New("payload not found in context")
+	}
+
+	payload, ok := unverifiedPayload.(Payload)
+	if !ok {
+		return nil, errors.New("invalid payload type")
+	}
+
+	return &payload, nil
 }

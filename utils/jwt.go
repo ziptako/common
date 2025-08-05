@@ -2,7 +2,8 @@ package utils
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
+	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"time"
 )
@@ -35,13 +36,25 @@ func GenerateJwtToken(a Auth, p *Payload) (string, error) {
 func GetPayloadFromContext(ctx context.Context) (*Payload, error) {
 	unverifiedPayload := ctx.Value("payload")
 	if unverifiedPayload == nil {
-		return nil, errors.New("payload not found in context")
+		return nil, fmt.Errorf("[GPFC001] 无效的payload信息")
 	}
 
-	payload, ok := unverifiedPayload.(Payload)
+	payloadMap, ok := unverifiedPayload.(map[string]interface{})
 	if !ok {
-		return nil, errors.New("invalid payload type")
+		return nil, fmt.Errorf("[GPFC002] 无效的payload信息")
 	}
 
+	// 将 map 转为 JSON
+	jsonData, err := json.Marshal(payloadMap)
+	if err != nil {
+		return nil, fmt.Errorf("[GPFC003] 无效的payload信息")
+	}
+
+	// 将 JSON 转为结构体
+	var payload Payload
+	err = json.Unmarshal(jsonData, &payload)
+	if err != nil {
+		return nil, fmt.Errorf("[GPFC004] 无效的payload信息")
+	}
 	return &payload, nil
 }
